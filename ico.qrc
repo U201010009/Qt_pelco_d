@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/ico/client">
+        <file>serial.ico</file>
+    </qresource>
+</RCC>
