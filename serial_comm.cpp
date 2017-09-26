@@ -1,5 +1,3 @@
-
-
 #include "serial_comm.h"
 #include <iostream>
 #include <stdio.h>
@@ -30,6 +28,8 @@ int SerialComm::open(char* lpszPortNum,
     DCB  dcb;   //串口设备控制块 Device Control Block
     BOOL bSuccess;
 
+    memset(&dcb, 0, sizeof(dcb));
+
     // m_hCom即为函数返回的串口的句柄
     m_hCom = CreateFileA(lpszPortNum,           // pointer to name of the file
                          GENERIC_READ | GENERIC_WRITE, // 允许读写。
@@ -40,7 +40,7 @@ int SerialComm::open(char* lpszPortNum,
                          FILE_FLAG_OVERLAPPED,  // 使用异步方式 overlapped I/O。
                          NULL);                 // 通讯设备不能用模板打开。
     if (m_hCom == INVALID_HANDLE_VALUE) {
-        SerialComm::ErrorToString("RS232::open()   CreateFile() failed, invalid handle value");
+        std::cout << "CreateFileA "<< lpszPortNum << " error! errno = " << GetLastError() << std::endl;
         return FALSE;
     }
 
@@ -49,19 +49,32 @@ int SerialComm::open(char* lpszPortNum,
     bSuccess = GetCommState(m_hCom, &dcb);
     if (!bSuccess) {
         SerialComm::close();
-        SerialComm::ErrorToString("RS232::open()   GetCommState() failed");
+        std::cout << "GetCommState error! errno = " << GetLastError() << std::endl;
         return FALSE;
     }
+    std::cout << "Get CommStatus : BaudRate = " << dcb.BaudRate << ", Parity = " << dcb.Parity << ", ByteSize = " << dcb.ByteSize << ", StopBits = " << dcb.StopBits << std::endl;
+
+    dcb.DCBlength = sizeof(dcb);
     dcb.BaudRate = dwBaudRate;   // 串口波特率。
     dcb.Parity = byParity;     // 校验方式，值0~4分别对应无校验、奇
     // 校验、偶校验、校验、置位、校验清零。
     dcb.fParity = 0;             // 为1的话激活奇偶校验检查。
+    dcb.fNull = false;
     dcb.ByteSize = byByteSize;   // 一个字节的数据位个数，范围是5~8。
     dcb.StopBits = byStopBits;   // 停止位个数，0~2分别对应1位、1.5位、
     // 2位停止位。
-    if (!bSuccess) {
+
+    if (!SetCommState(m_hCom, &dcb))
+    {
         SerialComm::close();
-        SerialComm::ErrorToString("RS232::open()   SetCommState() failed");
+        std::cout << "SetCommState error! errno = " << GetLastError() << std::endl;
+        return FALSE;
+    }
+
+    if (!PurgeComm(m_hCom, PURGE_TXCLEAR | PURGE_RXCLEAR))
+    {
+        SerialComm::close();
+        std::cout << "PurgeComm error! errno = " << GetLastError() << std::endl;
         return FALSE;
     }
 
@@ -70,7 +83,7 @@ int SerialComm::open(char* lpszPortNum,
     m_fd = ::open(lpszPortNum, O_RDWR | O_NOCTTY | O_NDELAY);
     if(-1 == m_fd)
     {
-        perror("Can't Open Serial");
+        LOG_ERROR << "open " << lpszPortNum << " error!";
         return false;
     }
     return set_opt(dwBaudRate, byParity, byStopBits, byByteSize);
@@ -86,36 +99,45 @@ DWORD SerialComm::output(LPCVOID pdata, DWORD   len) {
 
     if (len < 1)
         return 0;
-    // create event for overlapped I/O
-    m_ov.hEvent = CreateEventA(NULL,   // pointer to security attributes
-                               FALSE,  // flag for manual-reset event
-                               FALSE,  // flag for initial state
-                               "");    // pointer to event-object name
-    if (m_ov.hEvent == INVALID_HANDLE_VALUE) {
-        SerialComm::ErrorToString("RS232::output()   CreateEvent() failed");
-        return -1;
-    }
+    //// create event for overlapped I/O
+    //m_ov.hEvent = CreateEventA(NULL,   // pointer to security attributes
+    //                           FALSE,  // flag for manual-reset event
+    //                           FALSE,  // flag for initial state
+    //                           "");    // pointer to event-object name
+    //if (m_ov.hEvent == INVALID_HANDLE_VALUE) {
+    //    SerialComm::ErrorToString("RS232::output()   CreateEvent() failed");
+    //    return -1;
+    //}
+
     bSuccess = WriteFile(m_hCom,   // handle to file to write to
                          pdata,    // pointer to data to write to file
                          len,      // number of bytes to write
                          &written, // pointer to number of bytes written
                          &m_ov);  // pointer to structure needed for overlapped I/O
-    // 如果函数执行成功的话检查written的值为写入的字节数，WriteFile函数执行完毕后
-    // 自行填充的，利用此变量的填充值可以用来检查该函数是否将所有的数据成功写入串口
-    if (SerialComm::IsNT()) {
-        bSuccess = GetOverlappedResult(m_hCom, &m_ov, &written, TRUE);
-        if (!bSuccess) {
-            CloseHandle(m_ov.hEvent);
-            SerialComm::ErrorToString("RS232::output()   GetOverlappedResult() failed");
-            return -1;
-        }
-    }
-    else if (len != written) {
-        CloseHandle(m_ov.hEvent);
-        SerialComm::ErrorToString("RS232::output()   WriteFile() failed");
+
+    if (!bSuccess)
+    {
+        char buff[64] = { 0 };
+        std::cout << "WriteFile error! errno = " << GetLastError() << std::endl;
         return -1;
     }
-    CloseHandle(m_ov.hEvent);
+
+    //// 如果函数执行成功的话检查written的值为写入的字节数，WriteFile函数执行完毕后
+    //// 自行填充的，利用此变量的填充值可以用来检查该函数是否将所有的数据成功写入串口
+    //if (SerialComm::IsNT()) {
+    //    bSuccess = GetOverlappedResult(m_hCom, &m_ov, &written, TRUE);
+    //    if (!bSuccess) {
+    //        CloseHandle(m_ov.hEvent);
+    //        SerialComm::ErrorToString("RS232::output()   GetOverlappedResult() failed");
+    //        return -1;
+    //    }
+    //}
+    //else if (len != written) {
+    //    CloseHandle(m_ov.hEvent);
+    //    SerialComm::ErrorToString("RS232::output()   WriteFile() failed");
+    //    return -1;
+    //}
+    //CloseHandle(m_ov.hEvent);
     return written;
 #elif __linux__
     if(-1 == m_fd)
@@ -219,14 +241,14 @@ DWORD SerialComm::input(LPVOID pdest, DWORD  len, DWORD  dwMaxWait) {
     else {
         CloseHandle(m_ov.hEvent);
         //        wsprintfA(m_lpszErrorMessage, "RS232::input()   No EV_RXCHAR occured\n");
-        std::cout << "No EV_RXCHAR occured" << std::endl;
+        //std::cout << "No EV_RXCHAR occured" << std::endl;
         return -1;
     }
     CloseHandle(m_ov.hEvent);
     return read;
 }
 
-VOID SerialComm::ErrorToString(const char* lpszMessage) {
+VOID SerialComm::ErrorToString(char* lpszMessage) {
     //    LPVOID lpMessageBuffer;
     //    DWORD  error = GetLastError();
 
@@ -243,7 +265,7 @@ VOID SerialComm::ErrorToString(const char* lpszMessage) {
     //    wsprintfA(m_lpszErrorMessage, "%s: (%d) %s\n", lpszMessage, error, lpMessageBuffer);
 
     //    LocalFree(lpMessageBuffer);
-    std::cout << lpszMessage << std::endl;
+    //std::cout << lpszMessage << std::endl;
 }
 
 BOOL SerialComm::IsNT(void) {

@@ -6,7 +6,6 @@
 
 class PELCO_D {
 public:
-    PELCO_D();
     bool Init(unsigned int com,
               BYTE addr,
               DWORD  dwBaudRate);
@@ -34,7 +33,7 @@ private:
 
 private:
     SerialComm m_comm;
-    int m_speed;
+    int speed;
     BYTE m_addr;
 };
 

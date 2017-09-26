@@ -2,10 +2,6 @@
 #include "pelco_d.h"
 
 
-PELCO_D::PELCO_D() :
-    m_speed(0xff)
-{}
-
 bool PELCO_D::Init(unsigned int com,
                    BYTE addr,
                    DWORD  dwBaudRate)
@@ -33,7 +29,7 @@ int PELCO_D::Up()
     if (m_comm.isAvailable())
     {
         //{0xff,0x01,0x00,0x08,0x00,0xff,0x08,}//上
-        BYTE code[7] = { 0xff, m_addr, 0x00, 0x08, 0x00, m_speed };
+        BYTE code[7] = { 0xff, m_addr, 0x00, 0x08, 0x00, 0xff };
         __CreateCheck(code, sizeof(code));
         return m_comm.output(code, sizeof(code));
     }
@@ -45,7 +41,7 @@ int PELCO_D::Down()
     if (m_comm.isAvailable())
     {
         //{0xff,0x01,0x00,0x10,0x00,0xff,0x10,}//下
-        BYTE code[7] = { 0xff, m_addr, 0x00, 0x10, 0x00, m_speed };
+        BYTE code[7] = { 0xff, m_addr, 0x00, 0x10, 0x00, 0xff };
         __CreateCheck(code, sizeof(code));
         return m_comm.output(code, sizeof(code));
     }
@@ -69,7 +65,7 @@ int PELCO_D::Right()
     if (m_comm.isAvailable())
     {
         //{0xff,0x01,0x00,0x02,0xff,0x00,0x02,}//右
-        BYTE code[7] = { 0xff, m_addr, 0x00, 0x02, m_speed, 0x00 };
+        BYTE code[7] = { 0xff, m_addr, 0x00, 0x02, 0xff, 0x00 };
         __CreateCheck(code, sizeof(code));
         return m_comm.output(code, sizeof(code));
     }
@@ -81,7 +77,7 @@ int PELCO_D::Left()
     if (m_comm.isAvailable())
     {
         //{0xff,0x01,0x00,0x04,0xff,0x00,0x04,}//左
-        BYTE code[7] = { 0xff, m_addr, 0x00, 0x04, m_speed, 0x00 };
+        BYTE code[7] = { 0xff, m_addr, 0x00, 0x04, 0xff, 0x00 };
         __CreateCheck(code, sizeof(code));
         return m_comm.output(code, sizeof(code));
     }
@@ -168,14 +164,13 @@ int PELCO_D::SetPresetPoint(BYTE num)
         //{0xff,0x01,0x00,0x03,0x00,0x01,0x05,}//设置预置点001
         if(num >= 1 && num <= 32)
         {
-            BYTE code[7] = { 0xff, m_addr, 0x00, 0x03, 0x00, num };
+            BYTE code[7] = { 0xff, m_addr, 0x00, 0x07, 0x00, num };
             __CreateCheck(code, sizeof(code));
             return m_comm.output(code, sizeof(code));
         }
         else if(num >= 33 && num <= 64)
         {
-            BYTE code[7] = { 0xff, m_addr, 0x00, 0x03, 0x00, num };
-//            BYTE code[7] = { 0xff, m_addr, 0x02, 0xff, num, 0x00 };
+            BYTE code[7] = { 0xff, m_addr, 0x02, 0xff, num, 0x00 };
             __CreateCheck(code, sizeof(code));
             return m_comm.output(code, sizeof(code));
         }
@@ -191,14 +186,13 @@ int PELCO_D::CallPresetPoint(BYTE num)
         //{0xff,0x01,0x00,0x07,0x00,0x01,0x09,}//转至预置点001
         if(num >= 1 && num <= 32)
         {
-            BYTE code[7] = { 0xff, m_addr, 0x00, 0x07, 0x00, num };
+            BYTE code[7] = { 0xff, m_addr, 0x00, 0x03, 0x00, num };
             __CreateCheck(code, sizeof(code));
             return m_comm.output(code, sizeof(code));
         }
         else if(num >= 33 && num <= 64)
         {
-            BYTE code[7] = { 0xff, m_addr, 0x00, 0x07, 0x00, num };
-//            BYTE code[7] = { 0xff, m_addr, 0x02, 0xff, num, 0x01 };
+            BYTE code[7] = { 0xff, m_addr, 0x02, 0xff, num, 0x01 };
             __CreateCheck(code, sizeof(code));
             return m_comm.output(code, sizeof(code));
         }
@@ -237,12 +231,12 @@ bool PELCO_D::Available()
 void PELCO_D::SetSpeed(int speed)
 {
     //speed range from 00H to 3FH(63)
-    this->m_speed = speed > 63 ? 63 : (speed < 0 ? 0 : speed);
+    this->speed = speed > 63 ? 63 : (speed < 0 ? 0 : speed);
 }
 
 int PELCO_D::GetSpeed()
 {
-    return this->m_speed;
+    return this->speed;
 }
 
 void PELCO_D::__CreateCheck(BYTE* code, int len)

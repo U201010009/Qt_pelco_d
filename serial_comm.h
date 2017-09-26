@@ -41,7 +41,7 @@ public:
 private:
 
 #ifdef WIN32
-    VOID    ErrorToString(const char* lpszMessage);
+    VOID    ErrorToString(char* lpszMessage);
     BOOL    IsNT(void);
     char       m_lpszErrorMessage[256];
     HANDLE      m_hCom;   // 串口句柄

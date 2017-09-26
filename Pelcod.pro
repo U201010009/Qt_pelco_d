@@ -11,7 +11,8 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = Pelcod
 TEMPLATE = app
 
-RC_ICONS = "$$PWD/serial.ico"
+#RC_ICONS = "$$PWD/serial.ico"
+RC_FILE = client.rc
 
 DEFINES = WIN32
 
@@ -25,7 +26,3 @@ HEADERS  += dialog.h \
     serial_comm.h
 
 FORMS    += dialog.ui
-
-RESOURCES += \
-    ico.qrc
-RC_FILE = ico.rc

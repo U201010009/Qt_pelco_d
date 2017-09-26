@@ -20,16 +20,6 @@ Dialog::Dialog(QWidget *parent) :
     {
         ui->presetpoint_spin_box_->setRange(1, 64);
     }
-
-    if(ui->speed_slider_ && ui->speed_spin_box_)
-    {
-        ui->speed_slider_->setRange(0, 63);
-        ui->speed_spin_box_->setRange(0, 63);
-
-        QObject::connect(ui->speed_slider_, SIGNAL(valueChanged(int)), this, SLOT(onSpeedValueChanged(int)));
-        QObject::connect(ui->speed_spin_box_, SIGNAL(valueChanged(int)), this, SLOT(onSpeedValueChanged(int)));
-    }
-
 }
 
 Dialog::~Dialog()
@@ -79,7 +69,6 @@ void Dialog::onCheckBoxStateChanged(int state)
         {}
         else
         {
-            setBtnEnable(false);
             QMessageBox msgBox(QMessageBox::Warning, "failed", "Serial Inif failed!", QMessageBox::Ok);
             msgBox.exec();
         }
@@ -96,10 +85,6 @@ void Dialog::onUpPressed()
 {
     if(mPelcoD.Available())
     {
-        if(ui->speed_slider_)
-        {
-            mPelcoD.SetSpeed(ui->speed_slider_->value());
-        }
         mPelcoD.Up();
     }
 }
@@ -108,10 +93,6 @@ void Dialog::onDownPressed()
 {
     if(mPelcoD.Available())
     {
-        if(ui->speed_slider_)
-        {
-            mPelcoD.SetSpeed(ui->speed_slider_->value());
-        }
         mPelcoD.Down();
     }
 }
@@ -120,10 +101,6 @@ void Dialog::onLeftPressed()
 {
     if(mPelcoD.Available())
     {
-        if(ui->speed_slider_)
-        {
-            mPelcoD.SetSpeed(ui->speed_slider_->value());
-        }
         mPelcoD.Left();
     }
 }
@@ -132,10 +109,6 @@ void Dialog::onRightPressed()
 {
     if(mPelcoD.Available())
     {
-        if(ui->speed_slider_)
-        {
-            mPelcoD.SetSpeed(ui->speed_slider_->value());
-        }
         mPelcoD.Right();
     }
 }
@@ -144,10 +117,6 @@ void Dialog::onFocusUpPressed()
 {
     if(mPelcoD.Available())
     {
-        if(ui->speed_slider_)
-        {
-            mPelcoD.SetSpeed(ui->speed_slider_->value());
-        }
         mPelcoD.FocusFar();
     }
 }
@@ -156,10 +125,6 @@ void Dialog::onFocusDownPressed()
 {
     if(mPelcoD.Available())
     {
-        if(ui->speed_slider_)
-        {
-            mPelcoD.SetSpeed(ui->speed_slider_->value());
-        }
         mPelcoD.FocusNear();
     }
 }
@@ -168,10 +133,6 @@ void Dialog::onApertureUpPressed()
 {
     if(mPelcoD.Available())
     {
-        if(ui->speed_slider_)
-        {
-            mPelcoD.SetSpeed(ui->speed_slider_->value());
-        }
         mPelcoD.ApertureLarge();
     }
 }
@@ -180,10 +141,6 @@ void Dialog::onApertureDownPressed()
 {
     if(mPelcoD.Available())
     {
-        if(ui->speed_slider_)
-        {
-            mPelcoD.SetSpeed(ui->speed_slider_->value());
-        }
         mPelcoD.ApertureSmall();
     }
 }
@@ -229,14 +186,5 @@ void Dialog::onReleased()
     if(mPelcoD.Available())
     {
         mPelcoD.Stop();
-    }
-}
-
-void Dialog::onSpeedValueChanged(int num)
-{
-    if(ui->speed_slider_ && ui->speed_spin_box_)
-    {
-        ui->speed_slider_->setValue(num);
-        ui->speed_spin_box_->setValue(num);
     }
 }

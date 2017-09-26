@@ -37,8 +37,6 @@ private slots:
 
     void onReleased();
 
-
-    void onSpeedValueChanged(int num);
 private:
     Ui::Dialog *ui;
 
